@@ -72,8 +72,44 @@ def latestMajorNews():
     for k in majorSites:
         list.append(latestNews(k))
     return list
-print(yf.Ticker("MSFT").info)
 
-#majorTickers = createMajorTickers()
-#majorNewsSites = latestMajorNews()
+def recommendations(ticker, limit, pref):
+    share = yf.Ticker(ticker).recommendations
+    for i in range(limit):
+        if not pref == "":
+            if share.values[i] == pref:
+                print(share.values[i][1])
+        else:
+            print(share.values[i][0] + ": " + share.values[i][1])
+        
+def generalSignal(ticker, limit):
+    share = yf.Ticker(ticker).recommendations
+    sell = 0
+    neutral = 0
+    buy = 0
+    #market-perform -> average return hence buy,neutral
+    k = share.values[::-1]
+    for i in range(limit):
+        print(k[i])
+        if k[i][1] == ("Buy" or "Overweight" or "Market Perform"):
+            buy += 1
+        elif k[i][1] == ("Sell" or "Underweight"):
+            sell += 1
+        elif k[i][1] == ("Neutral" or "Equal-Weight" or "Market Perform" or "Hold"):
+            neutral += 1
+    if sell > neutral and sell > buy:
+        return "sell"
+    elif buy > neutral and buy > sell:
+        return "buy"
+    elif buy == neutral or sell == neutral and neutral > sell or neutral > buy:
+        return "neutral"
+    else:
+        print("undecided")
+
+def rsi(ticker, period):
+    share = yf.Ticker(ticker)
+
+
+
+
 
