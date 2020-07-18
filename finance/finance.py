@@ -3,16 +3,19 @@ from newscatcher import Newscatcher
 from newscatcher import describe_url
 from newscatcher import urls
 import matplotlib.pyplot as plt
+from datetime import date
 import mplfinance as mpf
 from yahoo_fin import stock_info as si
+from datetime import datetime 
 import time
+import datetime
 import pandas as np
 import numpy as np
-import datetime
+import pytz
 
 majorSites = ["seekingalpha.com", "marketwatch.com", "nytimes.com", "wsj.com", "bloomberg.com", "investopedia.com", "finance.yahoo.com", "money.cnn.com", "reuters.com", "forbes.com"]
 topTickers = ["AAPL", "ABBV", "ABT", "ACN", "ADBE", "AIG", "ALL", "AMGN", "AMT", "AMZN", "AXP", "BA", "BAC", "BIIB", "BK", "BKNG", "BLK", "BMY", "C", "CAT", "CHTR", "CL", "CMCSA", "COF", "COP", "COST", "CRM", "CSCO", "CVS", "CVX", "DD", "DHR", "DIS", "DOW", "DUK", "EMR", "EXC", "F", "FB", "FDX", "GD", "GE", "GILD", "GM", "GOOG", "GOOGL", "GS", "HD", "HON", "IBM", "INTC", "JNJ", "JPM", "KHC", "KMI", "KO", "LLY", "LMT", "LOW", "MA", "MCD", "MDLZ", "MDT", "MET", "MMM", "MO"
-, "MRK", "MS", "MSFT", "NEE", "NFLX", "NKE", "NVDA", "ORCL", "OXY", "PEP", "PFE", "PG", "PM", "PYPL", "QCOM", "RTX", "SBUX", "SLB", "SO", "SPG", "T", "TGT", "TMO", "TXN", "UNH", "UNP", "UPS", "USB", "V", "VZ", "WBA", "WFC", "WMT", "XOM","BRK.B"]
+, "MRK", "MS", "MSFT", "NEE", "NFLX", "NKE", "NVDA", "ORCL", "OXY", "PEP", "PFE", "PG", "PM", "PYPL", "QCOM", "RTX", "SBUX", "SLB", "SO", "SPG", "T", "TGT", "TMO", "TXN", "UNH", "UNP", "UPS", "USB", "V", "VZ", "WBA", "WFC", "WMT", "XOM"]
 
 class stock:
     def __init__(self, ticker):
@@ -125,11 +128,16 @@ def priceHistoryConfigs(tickerT, periodT, intervalT):
 def latestPrice(ticker):
     return si.get_live_price(ticker)
 
-def candlesticks(ticker, date):
-    SPX = priceHistoryConfigs(ticker, date, "5m")
+def getPriceByTime(ticker, time):
+    i = datetime.datetime.now()
+    date = ("dd/mm/yyyy format =  %s-%s-%s" % (i.day, i.month, i.year))
+    return priceHistoryConfigs(ticker,date,time).tail(1)
+
+def candlesticks(ticker, date, interval):
+    SPX = priceHistoryConfigs(ticker, date, interval)
     mc = mpf.make_marketcolors(up='g',down='r')
     s = mpf.make_mpf_style(marketcolors=mc)
-    setup = dict(type='candle',mav=(2,4,6),volume=True,figratio=(11,8),figscale=0.85, style=s)
+    setup = dict(type='candle',mav=(7,11,20),volume=True,figratio=(11,8),figscale=0.85, style=s)
     mpf.plot(SPX.iloc[0: len(SPX)-1],**setup)
     plt.show()
 
@@ -138,7 +146,27 @@ def pattern(ticker):
 def entryexit(ticker):
     return 0
 
+#records changes in market by sens (percentage) over a given interval, interval in seconds, sleep 
+def priceNotification(interval, sens):
+    nyc_datetime = datetime.datetime.now(pytz.timezone('US/Eastern'))
+    stocksOfInterest = []
+    for stock in topTickers:
+        values = getPriceByTime(stock,interval)
+        if (((values['Close']/values['Open'])-1)*100)[0] > sens:
+            print(str(stock) + " moved more than " + str(sens) + "% by " + str(nyc_datetime))
+            stocksOfInterest.append(stock)
+    return stocksOfInterest
 
+def triggerFunction(interval,percent,sleep):
+    while True:
+        start_time = time.time()
+        print(priceNotification(interval,percent))
+        end_time = time.time()-start_time
+        if sleep < end_time:
+            sleep = end_time+0.1
+        time.sleep(sleep)
+#candlesticks("MSFT", "2020-07-15", "5m")
+triggerFunction("5m",0.1,15)
     
 
 
