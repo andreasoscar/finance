@@ -14,6 +14,8 @@ import pandas as np
 import numpy as np
 import pytz
 
+
+
 tz = pytz.timezone('US/Eastern')
 us_holidays = holidays.US()
 
@@ -49,7 +51,10 @@ def latestNews(source):
         print("unable to retrieve data from: " + source)
 
 def initTicker(ticker):
-    print(ticker)
+    #print(ticker)
+    
+    i = datetime.datetime.now()
+    date = ("%s-%s-%s" % (i.year, i.month, i.day))
     s = stock(ticker)
     gTicker = yf.Ticker(ticker)
     try:
@@ -66,12 +71,11 @@ def initTicker(ticker):
         s.lastDividend = divs.pop()
         s.market = inf['market']
         s.open = inf['open']
-        print(s.open)
         s.previousClose = inf['previousClose']
         s.lastSplitDate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(inf['lastSplitDate']))
         s.lastSplitYield = inf['lastSplitFactor']
         s.volumeToday = inf['volume']
-        s.todayClose = latestPrice(ticker)
+        s.todayClose = priceHistory(ticker,date,date)['Close'][0]
         return s
     except:
         print(ticker + " did not succeed")
@@ -191,7 +195,8 @@ def isOpen(now = None):
         return True
 
 #candlesticks("MSFT", "2020-07-15", "5m")
-triggerFunction("5m",0.1,15)
+#triggerFunction("5m",0.1,15)
+print(initTicker("MSFT"))
     
 
 
