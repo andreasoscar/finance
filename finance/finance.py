@@ -2,7 +2,12 @@ import yfinance as yf
 from newscatcher import Newscatcher
 from newscatcher import describe_url
 from newscatcher import urls
+import matplotlib.pyplot as plt
+import mplfinance as mpf
+from yahoo_fin import stock_info as si
 import time
+import pandas as np
+import numpy as np
 import datetime
 
 majorSites = ["seekingalpha.com", "marketwatch.com", "nytimes.com", "wsj.com", "bloomberg.com", "investopedia.com", "finance.yahoo.com", "money.cnn.com", "reuters.com", "forbes.com"]
@@ -26,6 +31,7 @@ class stock:
         self.yearperformance = 0
         self.lastSplitDate = "00:00:00"
         self.lastSplitYield = "0:0"
+        self.todayClose = 0
 
 def latestNews(source):
     try:
@@ -50,14 +56,15 @@ def initTicker(ticker):
         divs = [i for i in divs if i > 0]
         s.dividendRate = inf['dividendRate']
         s.yearperformance = inf['52WeekChange']
-        print(divs)
         s.lastDividend = divs.pop()
         s.market = inf['market']
         s.open = inf['open']
+        print(s.open)
         s.previousClose = inf['previousClose']
         s.lastSplitDate = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(inf['lastSplitDate']))
         s.lastSplitYield = inf['lastSplitFactor']
         s.volumeToday = inf['volume']
+        s.todayClose = latestPrice(ticker)
         return s
     except:
         print(ticker + " did not succeed")
@@ -106,9 +113,33 @@ def generalSignal(ticker, limit):
     else:
         print("undecided")
 
-def rsi(ticker, period):
-    share = yf.Ticker(ticker)
+def latestClose(ticker):
+    return yf.download(ticker)['Close'][::-1][0]
 
+def priceHistory(ticker, start, end):
+    return yf.download(ticker, start, end)
+
+def priceHistoryConfigs(tickerT, periodT, intervalT):
+    return yf.download(tickers=tickerT, period=periodT, interval=intervalT)
+
+def latestPrice(ticker):
+    return si.get_live_price(ticker)
+
+def candlesticks(ticker, date):
+    SPX = priceHistoryConfigs(ticker, date, "5m")
+    mc = mpf.make_marketcolors(up='g',down='r')
+    s = mpf.make_mpf_style(marketcolors=mc)
+    setup = dict(type='candle',mav=(2,4,6),volume=True,figratio=(11,8),figscale=0.85, style=s)
+    mpf.plot(SPX.iloc[0: len(SPX)-1],**setup)
+    plt.show()
+
+def pattern(ticker):
+    return 0
+def entryexit(ticker):
+    return 0
+
+
+    
 
 
 
