@@ -8,10 +8,14 @@ import mplfinance as mpf
 from yahoo_fin import stock_info as si
 from datetime import datetime 
 import time
+import holidays
 import datetime
 import pandas as np
 import numpy as np
 import pytz
+
+tz = pytz.timezone('US/Eastern')
+us_holidays = holidays.US()
 
 majorSites = ["seekingalpha.com", "marketwatch.com", "nytimes.com", "wsj.com", "bloomberg.com", "investopedia.com", "finance.yahoo.com", "money.cnn.com", "reuters.com", "forbes.com"]
 topTickers = ["AAPL", "ABBV", "ABT", "ACN", "ADBE", "AIG", "ALL", "AMGN", "AMT", "AMZN", "AXP", "BA", "BAC", "BIIB", "BK", "BKNG", "BLK", "BMY", "C", "CAT", "CHTR", "CL", "CMCSA", "COF", "COP", "COST", "CRM", "CSCO", "CVS", "CVX", "DD", "DHR", "DIS", "DOW", "DUK", "EMR", "EXC", "F", "FB", "FDX", "GD", "GE", "GILD", "GM", "GOOG", "GOOGL", "GS", "HD", "HON", "IBM", "INTC", "JNJ", "JPM", "KHC", "KMI", "KO", "LLY", "LMT", "LOW", "MA", "MCD", "MDLZ", "MDT", "MET", "MMM", "MO"
@@ -153,7 +157,10 @@ def priceNotification(interval, sens):
     for stock in topTickers:
         values = getPriceByTime(stock,interval)
         if (((values['Close']/values['Open'])-1)*100)[0] > sens:
-            print(str(stock) + " moved more than " + str(sens) + "% by " + str(nyc_datetime))
+            if isOpen():
+                print(str(stock) + " moved more than " + str(sens) + "% by " + str(nyc_datetime))
+            else:
+                print("closed")
             stocksOfInterest.append(stock)
     return stocksOfInterest
 
@@ -165,6 +172,24 @@ def triggerFunction(interval,percent,sleep):
         if sleep < end_time:
             sleep = end_time+0.1
         time.sleep(sleep)
+
+
+def isOpen(now = None):
+        if not now:
+            now = datetime.datetime.now(tz)
+        openTime = datetime.time(hour = 9, minute = 30, second = 0)
+        closeTime = datetime.time(hour = 16, minute = 0, second = 0)
+        # If a holiday
+        if now.strftime('%Y-%m-%d') in us_holidays:
+            return False
+        # If before 0930 or after 1600
+        if (now.time() < openTime) or (now.time() > closeTime):
+            return False
+        # If it's a weekend
+        if now.date().weekday() > 4:
+            return False
+        return True
+
 #candlesticks("MSFT", "2020-07-15", "5m")
 triggerFunction("5m",0.1,15)
     
