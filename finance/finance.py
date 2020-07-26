@@ -20,7 +20,7 @@ tz = pytz.timezone('US/Eastern')
 us_holidays = holidays.US()
 
 majorSites = ["seekingalpha.com", "marketwatch.com", "nytimes.com", "wsj.com", "bloomberg.com", "investopedia.com", "finance.yahoo.com", "money.cnn.com", "reuters.com", "forbes.com"]
-topTickers = ["AAPL", "ABBV", "ABT", "ACN", "ADBE", "AIG", "ALL", "AMGN", "AMT", "AMZN", "AXP", "BA", "BAC", "BIIB", "BK", "BKNG", "BLK", "BMY", "C", "CAT", "CHTR", "CL", "CMCSA", "COF", "COP", "COST", "CRM", "CSCO", "CVS", "CVX", "DD", "DHR", "DIS", "DOW", "DUK", "EMR", "EXC", "F", "FB", "FDX", "GD", "GE", "GILD", "GM", "GOOG", "GOOGL", "GS", "HD", "HON", "IBM", "INTC", "JNJ", "JPM", "KHC", "KMI", "KO", "LLY", "LMT", "LOW", "MA", "MCD", "MDLZ", "MDT", "MET", "MMM", "MO"
+topTickers = ["AMD", "INTC", "ROKU", "AAPL", "ABBV", "ABT", "ACN", "ADBE", "AIG", "ALL", "AMGN", "AMT", "AMZN", "AXP", "BA", "BAC", "BIIB", "BK", "BKNG", "BLK", "BMY", "C", "CAT", "CHTR", "CL", "CMCSA", "COF", "COP", "COST", "CRM", "CSCO", "CVS", "CVX", "DD", "DHR", "DIS", "DOW", "DUK", "EMR", "EXC", "F", "FB", "FDX", "GD", "GE", "GILD", "GM", "GOOG", "GOOGL", "GS", "HD", "HON", "IBM", "INTC", "JNJ", "JPM", "KHC", "KMI", "KO", "LLY", "LMT", "LOW", "MA", "MCD", "MDLZ", "MDT", "MET", "MMM", "MO"
 , "MRK", "MS", "MSFT", "NEE", "NFLX", "NKE", "NVDA", "ORCL", "OXY", "PEP", "PFE", "PG", "PM", "PYPL", "QCOM", "RTX", "SBUX", "SLB", "SO", "SPG", "T", "TGT", "TMO", "TXN", "UNH", "UNP", "UPS", "USB", "V", "VZ", "WBA", "WFC", "WMT", "XOM"]
 
 class stock:
@@ -143,6 +143,7 @@ def getPriceByTime(ticker, time):
 
 def candlesticks(ticker, date, interval):
     SPX = priceHistoryConfigs(ticker, date, interval)
+    print(SPX)
     mc = mpf.make_marketcolors(up='g',down='r')
     s = mpf.make_mpf_style(marketcolors=mc)
     setup = dict(type='candle',mav=(7,11,20),volume=True,figratio=(11,8),figscale=0.85, style=s)
@@ -160,12 +161,20 @@ def priceNotification(interval, sens):
     stocksOfInterest = []
     for stock in topTickers:
         values = getPriceByTime(stock,interval)
-        if (((values['Close']/values['Open'])-1)*100)[0] > sens:
+        if sens > 0 and values['Close']>values['Open'] and (((values['Close']/values['Open'])-1)*100)[0] > sens:
             if isOpen():
                 print(str(stock) + " moved more than " + str(sens) + "% by " + str(nyc_datetime))
             else:
                 print("closed")
             stocksOfInterest.append(stock)
+        #decline
+        else:
+            if values['Close']<values['Open'] and 0 > sens:
+                if isOpen():
+                    print(str(stock) + " returned negative sequential result by: -" + str((1-(values['Close']/values['Open']))*100) + "%")
+                else:
+                    print("market closed")
+    print("stocks with " + str("positive" if sens > 0 else "negative") + " differentiation returned")
     return stocksOfInterest
 
 def triggerFunction(interval,percent,sleep):
@@ -176,7 +185,6 @@ def triggerFunction(interval,percent,sleep):
         if sleep < end_time:
             sleep = end_time+0.1
         time.sleep(sleep)
-
 
 def isOpen(now = None):
         if not now:
@@ -193,10 +201,15 @@ def isOpen(now = None):
         if now.date().weekday() > 4:
             return False
         return True
-
-#candlesticks("MSFT", "2020-07-15", "5m")
-#triggerFunction("5m",0.1,15)
-print(initTicker("MSFT"))
+#def supportLevel(ticker, span):
+#def resistanceLevel(ticker, span):
+def buyOrders():
+    list = [("INTC, 46.21$")]
+    return list
+#format: Stock(s), "date revised-now", "interval"
+candlesticks("AMD", "1mo", "1d")
+triggerFunction("5m",-0.4,15)
+#print(initTicker("MSFT"))
     
 
 
