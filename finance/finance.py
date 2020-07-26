@@ -164,14 +164,15 @@ def priceNotification(interval, sens):
         if sens > 0 and values['Close']>values['Open'] and (((values['Close']/values['Open'])-1)*100)[0] > sens:
             if isOpen():
                 print(str(stock) + " moved more than " + str(sens) + "% by " + str(nyc_datetime))
+                stocksOfInterest.append(stock)
             else:
-                print("closed")
-            stocksOfInterest.append(stock)
+                print("market closed")
         #decline
         else:
-            if values['Close']<values['Open'] and 0 > sens:
+            if (values['Close']<values['Open']) and 0 > sens:
                 if isOpen():
                     print(str(stock) + " returned negative sequential result by: -" + str((1-(values['Close']/values['Open']))*100) + "%")
+                    stocksOfInterest.append(stock)
                 else:
                     print("market closed")
     print("stocks with " + str("positive" if sens > 0 else "negative") + " differentiation returned")
@@ -206,12 +207,12 @@ def isOpen(now = None):
 def buyOrders():
     list = [("INTC, 46.21$")]
     return list
+
+
+
+
 #format: Stock(s), "date revised-now", "interval"
-candlesticks("AMD", "1mo", "1d")
-triggerFunction("5m",-0.4,15)
+#candlesticks("AMD", "1mo", "1d")
+#triggerFunction("5m",-0.4,15)
 #print(initTicker("MSFT"))
-    
-
-
-
 
