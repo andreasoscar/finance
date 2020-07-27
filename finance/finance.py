@@ -136,19 +136,30 @@ def priceHistoryConfigs(tickerT, periodT, intervalT):
 def latestPrice(ticker):
     return si.get_live_price(ticker)
 
+#only limited to todays date, scanning market for gains/losses registered today
 def getPriceByTime(ticker, time):
     i = datetime.datetime.now()
     date = ("dd/mm/yyyy format =  %s-%s-%s" % (i.day, i.month, i.year))
     return priceHistoryConfigs(ticker,date,time).tail(1)
 
-def candlesticks(ticker, date, interval):
-    SPX = priceHistoryConfigs(ticker, date, interval)
-    print(SPX)
-    mc = mpf.make_marketcolors(up='g',down='r')
-    s = mpf.make_mpf_style(marketcolors=mc)
-    setup = dict(type='candle',mav=(7,11,20),volume=True,figratio=(11,8),figscale=0.85, style=s)
-    mpf.plot(SPX.iloc[0: len(SPX)-1],**setup)
-    plt.show()
+#supports multiple tickers at same time, unfinished atm
+def candlesticks(ticker, date, interval, tickers=[]):
+    if len(tickers) == 0:
+        SPX = priceHistoryConfigs(ticker, date, interval)
+        mc = mpf.make_marketcolors(up='g',down='r')
+        s = mpf.make_mpf_style(marketcolors=mc)
+        setup = dict(type='candle',mav=(7,11,20),volume=True,figratio=(11,8),figscale=0.85, style=s)
+        mpf.plot(SPX.iloc[0: len(SPX)-1],**setup)
+        plt.show()
+    else:
+        for k in tickers:
+            SPX = priceHistoryConfigs(k[0], date, interval)
+            mc = mpf.make_marketcolors(up='g',down='r')
+            s = mpf.make_mpf_style(marketcolors=mc)
+            setup = dict(type='candle',mav=(7,11,20),volume=True,figratio=(11,8),figscale=0.85, style=s)
+            plt.figure(runner)
+            mpf.plot(SPX.iloc[0: len(SPX)-1],**setup)
+        plt.show()
 
 def pattern(ticker):
     return 0
@@ -161,27 +172,30 @@ def priceNotification(interval, sens):
     stocksOfInterest = []
     for stock in topTickers:
         values = getPriceByTime(stock,interval)
-        if sens > 0 and values['Close']>values['Open'] and (((values['Close']/values['Open'])-1)*100)[0] > sens:
+        if (sens > 0) and ((((values['Close']/values['Open'])-1)*100)[0] >= sens):
             if isOpen():
-                print(str(stock) + " moved more than " + str(sens) + "% by " + str(nyc_datetime))
-                stocksOfInterest.append(stock)
+                cnp = (((values['Close']/values['Open'])-1)*100)[0]
+                print("(" + str(stock) + "," + str(cnp) + ") " + " moved more than " + str(sens) + "% by " + str(nyc_datetime))
+                stocksOfInterest.append((stock,cnp))
             else:
                 print("market closed")
         #decline
         else:
-            if (values['Close']<values['Open']) and 0 > sens:
+            if ((1-((values['Close']/values['Open'])[0]))*100) <= sens and 0 > sens:
                 if isOpen():
-                    print(str(stock) + " returned negative sequential result by: -" + str((1-(values['Close']/values['Open']))*100) + "%")
-                    stocksOfInterest.append(stock)
+                    cnn = ((1-((values['Close']/values['Open'])[0]))*100)
+                    print(str((stock, cnn)) + " returned negative sequential result by: " + str(cnn) + "%")
+                    stocksOfInterest.append((stock, cnn))
                 else:
                     print("market closed")
     print("stocks with " + str("positive" if sens > 0 else "negative") + " differentiation returned")
+    print(stocksOfInterest)
     return stocksOfInterest
 
-def triggerFunction(interval,percent,sleep):
+def triggerFunction(interval,percent,sleep=60):
     while True:
         start_time = time.time()
-        print(priceNotification(interval,percent))
+        priceNotification(interval,percent)
         end_time = time.time()-start_time
         if sleep < end_time:
             sleep = end_time+0.1
@@ -202,17 +216,22 @@ def isOpen(now = None):
         if now.date().weekday() > 4:
             return False
         return True
+
+#implement:multithread candlesticks, multiple windows open at same time.
+def charts(interval, sens, span):
+     a = priceNotification(interval, sens)
+     candlesticks("",span,interval, a)
 #def supportLevel(ticker, span):
 #def resistanceLevel(ticker, span):
 def buyOrders():
     list = [("INTC, 46.21$")]
     return list
-
-
-
-
 #format: Stock(s), "date revised-now", "interval"
 #candlesticks("AMD", "1mo", "1d")
-#triggerFunction("5m",-0.4,15)
+#triggerFunction("1h",0.1,15)
+#print(isOpen())
 #print(initTicker("MSFT"))
+#priceNotification("1d",1.52)
+charts("1d",0.1,"1mo")
+
 
