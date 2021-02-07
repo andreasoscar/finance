@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pickle
+import threading
 from collections import Counter
 from sklearn.model_selection import train_test_split
 from sklearn import svm, neighbors
@@ -19,7 +20,7 @@ def process_data_for_labels(ticker):
     return tickers,df
 def buy_sell_hold(*args):
     cols = [c for c in args]
-    requirement = 0.02
+    requirement = 0.01
     for col in cols:
         if col > requirement:
             return 1
@@ -39,7 +40,7 @@ def extract_featuresets(ticker):
     df['{}_7d'.format(ticker)]))
     vals = df['{}_target'.format(ticker)].values.tolist()
     str_vals = [str(i) for i in vals]
-    print('Data spread:', Counter(str_vals))
+    #print('Data spread:', Counter(str_vals))
     df.fillna(0,inplace=True)
     df = df.replace([np.inf, -np.inf],np.nan)
     df.dropna(inplace=True)
@@ -63,9 +64,29 @@ def do_ml(ticker):
                             ('rfor',RandomForestClassifier())])
     clf.fit(X_train,y_train)
     confidence = clf.score(X_test,y_test)
-    print('Accurancy', confidence)
     predictions = clf.predict(X_test)
-    print('Predicted spread:',Counter(predictions))
-
-    return confidence
-do_ml('AMZN')
+    return confidence, Counter(predictions)
+def scansp500():
+    buy = dict()
+    sell = dict()
+    hold = dict()
+    tickers = []
+    i = 1
+    with open("sp500tickers.pickle","rb") as f:
+        tickers = pickle.load(f)
+    for ticker in tickers:
+        #print(ticker)
+        confidence, pred = do_ml(ticker)
+        #print("Accuracy", confidence)
+        if pred[1] > pred[-1]:
+            #print("Buy")
+            buy[ticker] = str(confidence) + ", " + str(pred)
+        elif pred[1] < pred[-1]:
+            #print("Sell")
+            sell[ticker] = str(confidence) + ", " + str(pred)
+        elif pred[0] > pred[1] and pred[0] > pred[-1]:
+            #print("Hold")
+            hold[ticker] = str(confidence) + ", " + str(pred)
+        print(ticker)
+    return buy,sell,hold
+b,s,h = scansp500()
