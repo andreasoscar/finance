@@ -17,7 +17,6 @@ def process_data_for_labels(ticker):
 
     df.fillna(0,inplace=True)
     return tickers,df
-#process_data_for_labels('XOM')
 def buy_sell_hold(*args):
     cols = [c for c in args]
     requirement = 0.02
@@ -69,4 +68,4 @@ def do_ml(ticker):
     print('Predicted spread:',Counter(predictions))
 
     return confidence
-do_ml('AAL')
+do_ml('AMZN')

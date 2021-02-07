@@ -35,8 +35,8 @@ def get_data_from_yahoo(reload_sp500=False):
         if not os.path.exists('stock_dfs'):
             os.makedirs('stock_dfs')
 
-        start = dt.datetime(2019,1,1)
-        end = dt.datetime(2020,12,31)
+        start = dt.datetime(2018,1,1)
+        end = dt.datetime(2021,2,7)
 
         for ticker in tickers:
             print(ticker)
@@ -65,12 +65,10 @@ def compile_data():
         if count % 10 == 0:
             print(count)
     main_df.to_csv('sp500_joined_closes.csv')
-#compile_data()
+compile_data()
 
 def visualize_data():
     df = pd.read_csv('sp500_joined_closes.csv')
-    # df['AAPL'].plot()
-    # plt.show()
     df.set_index('Date', inplace=True)
     df_corr = df.pct_change().corr()
     data = df_corr.values
@@ -95,4 +93,4 @@ def visualize_data():
     plt.show()
 
 
-visualize_data()
+#visualize_data()
